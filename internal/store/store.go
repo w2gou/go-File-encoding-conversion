@@ -71,6 +71,28 @@ func (s *InMemoryStore) Stats() (files int, totalBytes int64) {
 	return len(s.byID), s.totalBytes
 }
 
+func (s *InMemoryStore) HasName(name string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, ok := s.byName[name]
+	return ok
+}
+
+// EvictToFit 会尽最大努力在当前 store 内进行 FIFO 淘汰，使“incomingSize”有机会被加入。
+// 注意：该函数不做“预留”，只用于上传前的最佳努力预处理；最终是否能加入仍以 Add 为准。
+func (s *InMemoryStore) EvictToFit(incomingSize int64) error {
+	if incomingSize < 0 {
+		return fmt.Errorf("%w: incomingSize must be >= 0", ErrInvalidInput)
+	}
+	if incomingSize > s.maxTotalBytes {
+		return ErrTooLarge
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.evictLocked(incomingSize)
+}
+
 func (s *InMemoryStore) List() []FileMeta {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -273,4 +295,3 @@ func newID() string {
 	_, _ = rand.Read(b[:])
 	return hex.EncodeToString(b[:])
 }
-

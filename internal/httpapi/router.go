@@ -11,6 +11,9 @@ import (
 type RouterDeps struct {
 	ExternalOrigin string
 	Store          *store.InMemoryStore
+	UploadSem      *Semaphore
+	MaxFileBytes   int64
+	MaxRequestBytes int64
 }
 
 func NewRouter(d RouterDeps) http.Handler {
@@ -20,6 +23,7 @@ func NewRouter(d RouterDeps) http.Handler {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/files", listFilesHandler(d))
+		r.Post("/files", uploadFileHandler(d))
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

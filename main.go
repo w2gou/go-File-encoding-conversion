@@ -42,8 +42,11 @@ func main() {
 	}
 
 	handler := httpapi.NewRouter(httpapi.RouterDeps{
-		ExternalOrigin: origin,
-		Store:          memStore,
+		ExternalOrigin:  origin,
+		Store:           memStore,
+		UploadSem:       httpapi.NewSemaphore(cfg.Limits.UploadConcurrency),
+		MaxFileBytes:    int64(cfg.Limits.MaxFileSizeMB) * 1024 * 1024,
+		MaxRequestBytes: int64(cfg.Limits.MaxFileSizeMB)*1024*1024 + 2*1024*1024,
 	})
 
 	srv := &http.Server{

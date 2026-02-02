@@ -28,7 +28,12 @@ func TestListFiles(t *testing.T) {
 		t.Fatalf("add: %v", err)
 	}
 
-	h := NewRouter(RouterDeps{ExternalOrigin: "http://127.0.0.1:8080", Store: s})
+	h := NewRouter(RouterDeps{
+		ExternalOrigin: "http://127.0.0.1:8080",
+		Store:          s,
+		UploadSem:      NewSemaphore(1),
+		MaxFileBytes:   1024 * 1024,
+	})
 	req := httptest.NewRequest(http.MethodGet, "/api/files", nil)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
