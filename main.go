@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 	"os"
 
 	"go-learn/internal/config"
+	"go-learn/internal/httpapi"
 )
 
 func main() {
@@ -28,4 +30,23 @@ func main() {
 	log.Printf("limits: max_file_size_mb=%d max_files=%d max_total_size_mb=%d upload_concurrency=%d transcode_concurrency=%d",
 		cfg.Limits.MaxFileSizeMB, cfg.Limits.MaxFiles, cfg.Limits.MaxTotalSizeMB, cfg.Limits.UploadConcurrency, cfg.Limits.TranscodeConcurrency)
 	log.Printf("tokens: download_ttl_seconds=%d bridge_ttl_seconds=%d", cfg.Tokens.DownloadTTLSeconds, cfg.Tokens.BridgeTTLSeconds)
+
+	handler := httpapi.NewRouter(httpapi.RouterDeps{
+		ExternalOrigin: origin,
+	})
+
+	srv := &http.Server{
+		Addr:              cfg.Server.Listen,
+		Handler:           handler,
+		ReadHeaderTimeout: cfg.Server.Timeouts.ReadHeader(),
+		ReadTimeout:       cfg.Server.Timeouts.Read(),
+		WriteTimeout:      cfg.Server.Timeouts.Write(),
+		IdleTimeout:       cfg.Server.Timeouts.Idle(),
+	}
+
+	log.Printf("listening on %s", cfg.Server.Listen)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Printf("server error: %v", err)
+		os.Exit(1)
+	}
 }
