@@ -5,16 +5,22 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"go-learn/internal/store"
 )
 
 type RouterDeps struct {
 	ExternalOrigin string
+	Store          *store.InMemoryStore
 }
 
 func NewRouter(d RouterDeps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(Recover)
 	r.Use(RequestLog)
+
+	r.Route("/api", func(r chi.Router) {
+		r.Get("/files", listFilesHandler(d))
+	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -67,4 +73,3 @@ func NewRouter(d RouterDeps) http.Handler {
 
 	return r
 }
-

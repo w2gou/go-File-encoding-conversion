@@ -8,6 +8,7 @@ import (
 
 	"go-learn/internal/config"
 	"go-learn/internal/httpapi"
+	"go-learn/internal/store"
 )
 
 func main() {
@@ -31,8 +32,18 @@ func main() {
 		cfg.Limits.MaxFileSizeMB, cfg.Limits.MaxFiles, cfg.Limits.MaxTotalSizeMB, cfg.Limits.UploadConcurrency, cfg.Limits.TranscodeConcurrency)
 	log.Printf("tokens: download_ttl_seconds=%d bridge_ttl_seconds=%d", cfg.Tokens.DownloadTTLSeconds, cfg.Tokens.BridgeTTLSeconds)
 
+	memStore, err := store.NewInMemoryStore(store.NewParams{
+		MaxFiles:      cfg.Limits.MaxFiles,
+		MaxTotalBytes: int64(cfg.Limits.MaxTotalSizeMB) * 1024 * 1024,
+	})
+	if err != nil {
+		log.Printf("store init error: %v", err)
+		os.Exit(2)
+	}
+
 	handler := httpapi.NewRouter(httpapi.RouterDeps{
 		ExternalOrigin: origin,
+		Store:          memStore,
 	})
 
 	srv := &http.Server{
