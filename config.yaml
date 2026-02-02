@@ -1,0 +1,19 @@
+server:
+  listen: "0.0.0.0:8086"
+  base_url: "http://192.168.1.16"
+  timeouts:
+    read_header_seconds: 5
+    read_seconds: 300
+    write_seconds: 300
+    idle_seconds: 60
+
+limits:
+  max_file_size_mb: 100
+  max_files: 10000
+  max_total_size_mb: 300
+  upload_concurrency: 16
+  transcode_concurrency: 2
+
+tokens:
+  download_ttl_seconds: 60
+  bridge_ttl_seconds: 300
