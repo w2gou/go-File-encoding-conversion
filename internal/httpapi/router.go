@@ -24,6 +24,7 @@ func NewRouter(d RouterDeps) http.Handler {
 	r.Route("/api", func(r chi.Router) {
 		r.Get("/files", listFilesHandler(d))
 		r.Post("/files", uploadFileHandler(d))
+		r.Delete("/files/{id}", deleteFileHandler(d))
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
