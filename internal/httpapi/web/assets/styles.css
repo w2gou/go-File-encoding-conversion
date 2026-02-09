@@ -1,0 +1,160 @@
+:root {
+  --bg: #f6f7fb;
+  --panel: #ffffff;
+  --ink: #1a2a3a;
+  --muted: #5f7286;
+  --line: #d6dde7;
+  --brand: #0f62fe;
+  --danger: #d22d2d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 10% 10%, #eef4ff, #f6f7fb 60%);
+}
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page.mobile {
+  max-width: 520px;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 34px;
+}
+
+.hero p {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.panel h2,
+.panel h1 {
+  margin: 0 0 12px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.between {
+  justify-content: space-between;
+}
+
+input[type="file"] {
+  max-width: 100%;
+}
+
+button {
+  border: 1px solid transparent;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+button.alt {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.msg {
+  min-height: 20px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+.hint {
+  color: var(--muted);
+}
+
+.qr-box {
+  margin-top: 10px;
+}
+
+.qr-box img {
+  width: 220px;
+  height: 220px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .hero h1 {
+    font-size: 26px;
+  }
+  .page {
+    padding: 12px;
+  }
+  th,
+  td {
+    padding: 8px;
+  }
+}
+

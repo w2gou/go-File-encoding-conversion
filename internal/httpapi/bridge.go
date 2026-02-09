@@ -3,8 +3,6 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"strings"
@@ -139,6 +137,51 @@ func bridgeUploadHandler(d RouterDeps) http.HandlerFunc {
 	}
 }
 
+func bridgeDownloadInfoHandler(d RouterDeps) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if d.Store == nil {
+			Error(w, http.StatusInternalServerError, "INTERNAL", "store not initialized", "")
+			return
+		}
+		if d.Tokens == nil {
+			Error(w, http.StatusInternalServerError, "INTERNAL", "token store not initialized", "")
+			return
+		}
+
+		bridgeToken := chi.URLParam(r, "bridgeToken")
+		if bridgeToken == "" {
+			Error(w, http.StatusBadRequest, "BAD_REQUEST", "缺少 bridgeToken", "")
+			return
+		}
+
+		it, err := d.Tokens.Peek(bridgeToken)
+		if err != nil {
+			if errors.Is(err, tokens.ErrNotFound) {
+				Error(w, http.StatusGone, "TOKEN_INVALID", "二维码已失效", "")
+				return
+			}
+			Error(w, http.StatusInternalServerError, "INTERNAL", "校验二维码失败", err.Error())
+			return
+		}
+		if it.Kind != tokenKindBridgeDownload {
+			Error(w, http.StatusGone, "TOKEN_INVALID", "二维码已失效", "")
+			return
+		}
+
+		meta, err := d.Store.GetMeta(it.FileID)
+		if err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				Error(w, http.StatusNotFound, "NOT_FOUND", "not found", "")
+				return
+			}
+			Error(w, http.StatusInternalServerError, "INTERNAL", "读取文件信息失败", err.Error())
+			return
+		}
+
+		JSON(w, http.StatusOK, metaToFileListItem(meta))
+	}
+}
+
 func bridgeDownloadTokenHandler(d RouterDeps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if d.Store == nil {
@@ -203,36 +246,7 @@ func mobileUploadPageHandler(d RouterDeps) http.HandlerFunc {
 			writeBridgePageError(w, err)
 			return
 		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		escaped := template.HTMLEscapeString(bridgeToken)
-		_, _ = fmt.Fprintf(w, `<!doctype html>
-<html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>手机上传</title></head>
-<body>
-  <h1>手机上传</h1>
-  <form id="f" action="/api/bridge/%s/upload" method="post" enctype="multipart/form-data">
-    <input type="file" name="file" required />
-    <button type="submit">上传</button>
-  </form>
-  <p id="msg"></p>
-  <script>
-    const f = document.getElementById('f');
-    const msg = document.getElementById('msg');
-    f.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      msg.textContent = '上传中...';
-      const res = await fetch(f.action, { method: 'POST', body: new FormData(f) });
-      const text = await res.text();
-      if (res.ok) {
-        msg.textContent = '上传成功';
-      } else {
-        msg.textContent = '上传失败: ' + text;
-      }
-    });
-  </script>
-</body>
-</html>`, escaped)
+		serveWebHTML(w, r, "mobile-upload.html")
 	}
 }
 
@@ -257,7 +271,7 @@ func mobileDownloadPageHandler(d RouterDeps) http.HandlerFunc {
 			writeBridgePageError(w, errBridgeTokenInvalid)
 			return
 		}
-		meta, err := d.Store.GetMeta(it.FileID)
+		_, err = d.Store.GetMeta(it.FileID)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
 				writeBridgePageError(w, errBridgeTokenInvalid)
@@ -266,46 +280,7 @@ func mobileDownloadPageHandler(d RouterDeps) http.HandlerFunc {
 			Error(w, http.StatusInternalServerError, "INTERNAL", "读取文件信息失败", err.Error())
 			return
 		}
-
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		escapedToken := template.HTMLEscapeString(bridgeToken)
-		escapedName := template.HTMLEscapeString(meta.Name)
-		escapedEnc := template.HTMLEscapeString(normalizeEncoding(meta.Encoding))
-		_, _ = fmt.Fprintf(w, `<!doctype html>
-<html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>手机下载</title></head>
-<body>
-  <h1>手机下载</h1>
-  <p>文件名: %s</p>
-  <p>大小: %d 字节</p>
-  <p>编码: %s</p>
-  <button id="dl">下载</button>
-  <p id="msg"></p>
-  <script>
-    const btn = document.getElementById('dl');
-    const msg = document.getElementById('msg');
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      msg.textContent = '准备下载链接...';
-      const res = await fetch('/api/bridge/%s/download-token', { method: 'POST' });
-      const text = await res.text();
-      if (!res.ok) {
-        msg.textContent = '下载失败: ' + text;
-        btn.disabled = false;
-        return;
-      }
-      const data = JSON.parse(text);
-      if (!data || !data.url) {
-        msg.textContent = '下载失败: 响应不合法';
-        btn.disabled = false;
-        return;
-      }
-      window.location.href = data.url;
-      msg.textContent = '已开始下载';
-    });
-  </script>
-</body>
-</html>`, escapedName, meta.SizeBytes, escapedEnc, escapedToken)
+		serveWebHTML(w, r, "mobile-download.html")
 	}
 }
 
@@ -388,4 +363,3 @@ func writeBridgePageError(w http.ResponseWriter, err error) {
 	}
 	Error(w, http.StatusInternalServerError, "INTERNAL", "页面加载失败", err.Error())
 }
-

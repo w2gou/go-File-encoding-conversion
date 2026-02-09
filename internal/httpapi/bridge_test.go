@@ -154,6 +154,12 @@ func TestBridgeDownloadTokenOneTime(t *testing.T) {
 	if pageRR.Code != http.StatusOK {
 		t.Fatalf("mobile page expected 200, got %d body=%s", pageRR.Code, pageRR.Body.String())
 	}
+	infoReq := httptest.NewRequest(http.MethodGet, "/api/bridge/"+bridge.BridgeToken+"/download-info", nil)
+	infoRR := httptest.NewRecorder()
+	h.ServeHTTP(infoRR, infoReq)
+	if infoRR.Code != http.StatusOK {
+		t.Fatalf("bridge download-info expected 200, got %d body=%s", infoRR.Code, infoRR.Body.String())
+	}
 
 	dlTokenReq := httptest.NewRequest(http.MethodPost, "/api/bridge/"+bridge.BridgeToken+"/download-token", nil)
 	dlTokenRR := httptest.NewRecorder()
@@ -185,5 +191,10 @@ func TestBridgeDownloadTokenOneTime(t *testing.T) {
 	if againRR.Code != http.StatusGone {
 		t.Fatalf("second bridge download-token expected 410, got %d body=%s", againRR.Code, againRR.Body.String())
 	}
+	infoGoneReq := httptest.NewRequest(http.MethodGet, "/api/bridge/"+bridge.BridgeToken+"/download-info", nil)
+	infoGoneRR := httptest.NewRecorder()
+	h.ServeHTTP(infoGoneRR, infoGoneReq)
+	if infoGoneRR.Code != http.StatusGone {
+		t.Fatalf("consumed bridge download-info expected 410, got %d body=%s", infoGoneRR.Code, infoGoneRR.Body.String())
+	}
 }
-

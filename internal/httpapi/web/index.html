@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>File Encoding Conversion</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <h1>File Encoding Conversion</h1>
+      <p>LAN 文件管理与一次性扫码下载</p>
+    </header>
+
+    <section class="panel">
+      <h2>上传文件</h2>
+      <form id="upload-form" class="row">
+        <input id="upload-file" type="file" name="file" required>
+        <button type="submit">上传</button>
+      </form>
+      <p id="upload-msg" class="msg"></p>
+    </section>
+
+    <section class="panel">
+      <div class="row between">
+        <h2>文件列表</h2>
+        <button id="refresh-btn" type="button">刷新</button>
+      </div>
+      <div class="table-wrap">
+        <table id="files-table">
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>上传时间</th>
+              <th>大小</th>
+              <th>编码</th>
+              <th>文本</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="files-body"></tbody>
+        </table>
+      </div>
+      <p id="list-msg" class="msg"></p>
+    </section>
+
+    <section class="panel">
+      <h2>二维码</h2>
+      <div class="row">
+        <button id="bridge-upload-btn" type="button">生成手机上传二维码</button>
+      </div>
+      <div class="row">
+        <button id="bridge-download-btn" type="button">为选中文件生成手机下载二维码</button>
+      </div>
+      <p class="hint">先在表格点击“设为下载二维码目标”，再生成手机下载二维码。</p>
+      <div id="qr-box" class="qr-box hidden">
+        <img id="qr-img" alt="二维码">
+        <p><a id="qr-link" target="_blank" rel="noreferrer">打开手机页面</a></p>
+      </div>
+      <p id="qr-msg" class="msg"></p>
+    </section>
+  </main>
+
+  <script src="/assets/app.js"></script>
+</body>
+</html>
+
