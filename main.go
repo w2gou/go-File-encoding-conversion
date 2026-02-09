@@ -53,6 +53,7 @@ func main() {
 		Store:           memStore,
 		Tokens:          tokenStore,
 		DownloadTTL:     time.Duration(cfg.Tokens.DownloadTTLSeconds) * time.Second,
+		BridgeTTL:       time.Duration(cfg.Tokens.BridgeTTLSeconds) * time.Second,
 		UploadSem:       httpapi.NewSemaphore(cfg.Limits.UploadConcurrency),
 		MaxFileBytes:    int64(cfg.Limits.MaxFileSizeMB) * 1024 * 1024,
 		MaxRequestBytes: int64(cfg.Limits.MaxFileSizeMB)*1024*1024 + 2*1024*1024,

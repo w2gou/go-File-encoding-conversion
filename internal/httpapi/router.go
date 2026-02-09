@@ -15,6 +15,7 @@ type RouterDeps struct {
 	Store          *store.InMemoryStore
 	Tokens         *tokens.Store
 	DownloadTTL    time.Duration
+	BridgeTTL      time.Duration
 	UploadSem      *Semaphore
 	MaxFileBytes   int64
 	MaxRequestBytes int64
@@ -31,9 +32,14 @@ func NewRouter(d RouterDeps) http.Handler {
 		r.Patch("/files/{id}", renameFileHandler(d))
 		r.Delete("/files/{id}", deleteFileHandler(d))
 		r.Post("/files/{id}/download-token", createDownloadTokenHandler(d))
+		r.Post("/bridge/upload", createBridgeUploadHandler(d))
+		r.Post("/bridge/download", createBridgeDownloadHandler(d))
+		r.Post("/bridge/{bridgeToken}/upload", bridgeUploadHandler(d))
+		r.Post("/bridge/{bridgeToken}/download-token", bridgeDownloadTokenHandler(d))
 	})
 
 	r.Get("/dl/{token}", downloadByTokenHandler(d))
+	r.Get("/qrcode/{bridgeToken}.png", qrcodeHandler(d))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -44,41 +50,16 @@ func NewRouter(d RouterDeps) http.Handler {
   <h1>go-File-encoding-conversion</h1>
   <p>服务已启动（第五步骨架）。</p>
   <ul>
-    <li>手机上传页（占位）：<code>/m/upload/{token}</code></li>
-    <li>手机下载页（占位）：<code>/m/download/{token}</code></li>
+    <li>手机上传页：<code>/m/upload/{bridgeToken}</code></li>
+    <li>手机下载页：<code>/m/download/{bridgeToken}</code></li>
   </ul>
   <p>external_origin: <code>%s</code></p>
 </body>
 </html>`, d.ExternalOrigin)
 	})
 
-	r.Get("/m/upload/{token}", func(w http.ResponseWriter, r *http.Request) {
-		token := chi.URLParam(r, "token")
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = fmt.Fprintf(w, `<!doctype html>
-<html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>手机上传</title></head>
-<body>
-  <h1>手机上传（占位页）</h1>
-  <p>token: <code>%s</code></p>
-  <p>后续步骤会在此页接入上传表单并消费一次性 bridge token。</p>
-</body>
-</html>`, token)
-	})
-
-	r.Get("/m/download/{token}", func(w http.ResponseWriter, r *http.Request) {
-		token := chi.URLParam(r, "token")
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = fmt.Fprintf(w, `<!doctype html>
-<html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>手机下载</title></head>
-<body>
-  <h1>手机下载（占位页）</h1>
-  <p>token: <code>%s</code></p>
-  <p>后续步骤会在此页展示文件信息并触发一次性下载链接。</p>
-</body>
-</html>`, token)
-	})
+	r.Get("/m/upload/{bridgeToken}", mobileUploadPageHandler(d))
+	r.Get("/m/download/{bridgeToken}", mobileDownloadPageHandler(d))
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusNotFound, "NOT_FOUND", "not found", "")
