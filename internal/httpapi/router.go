@@ -3,14 +3,18 @@ package httpapi
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"go-learn/internal/store"
+	"go-learn/internal/tokens"
 )
 
 type RouterDeps struct {
 	ExternalOrigin string
 	Store          *store.InMemoryStore
+	Tokens         *tokens.Store
+	DownloadTTL    time.Duration
 	UploadSem      *Semaphore
 	MaxFileBytes   int64
 	MaxRequestBytes int64
@@ -26,7 +30,10 @@ func NewRouter(d RouterDeps) http.Handler {
 		r.Post("/files", uploadFileHandler(d))
 		r.Patch("/files/{id}", renameFileHandler(d))
 		r.Delete("/files/{id}", deleteFileHandler(d))
+		r.Post("/files/{id}/download-token", createDownloadTokenHandler(d))
 	})
+
+	r.Get("/dl/{token}", downloadByTokenHandler(d))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

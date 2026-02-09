@@ -5,10 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"go-learn/internal/config"
 	"go-learn/internal/httpapi"
 	"go-learn/internal/store"
+	"go-learn/internal/tokens"
 )
 
 func main() {
@@ -41,9 +43,16 @@ func main() {
 		os.Exit(2)
 	}
 
+	tokenStore := tokens.NewStore(tokens.Options{
+		CleanupInterval: 30 * time.Second,
+	})
+	defer tokenStore.Close()
+
 	handler := httpapi.NewRouter(httpapi.RouterDeps{
 		ExternalOrigin:  origin,
 		Store:           memStore,
+		Tokens:          tokenStore,
+		DownloadTTL:     time.Duration(cfg.Tokens.DownloadTTLSeconds) * time.Second,
 		UploadSem:       httpapi.NewSemaphore(cfg.Limits.UploadConcurrency),
 		MaxFileBytes:    int64(cfg.Limits.MaxFileSizeMB) * 1024 * 1024,
 		MaxRequestBytes: int64(cfg.Limits.MaxFileSizeMB)*1024*1024 + 2*1024*1024,
