@@ -122,7 +122,8 @@ func tryEncoding(sample []byte, encName string, minPrintable float64, minRunes i
 }
 
 func printableRatioUTF8(sample []byte) float64 {
-	return printableRatioRunes(string(sample))
+	ratio, _ := printableRatioRunes(string(sample))
+	return ratio
 }
 
 func printableRatioRunes(s string) (ratio float64, runes int) {
