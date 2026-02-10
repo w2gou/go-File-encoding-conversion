@@ -16,6 +16,7 @@ type RouterDeps struct {
 	DownloadTTL    time.Duration
 	BridgeTTL      time.Duration
 	UploadSem      *Semaphore
+	TranscodeSem   *Semaphore
 	MaxFileBytes   int64
 	MaxRequestBytes int64
 }
@@ -31,6 +32,7 @@ func NewRouter(d RouterDeps) http.Handler {
 		r.Patch("/files/{id}", renameFileHandler(d))
 		r.Delete("/files/{id}", deleteFileHandler(d))
 		r.Post("/files/{id}/download-token", createDownloadTokenHandler(d))
+		r.Post("/files/{id}/transcode", transcodeFileHandler(d))
 		r.Post("/bridge/upload", createBridgeUploadHandler(d))
 		r.Post("/bridge/download", createBridgeDownloadHandler(d))
 		r.Post("/bridge/{bridgeToken}/upload", bridgeUploadHandler(d))
